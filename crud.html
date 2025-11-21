@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory CRUD | Professional Design</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #eef1f5;
+    }
+
+    .navbar {
+      background: #1e3a8a;
+      padding: 18px;
+      color: white;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: 40px auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+
+    .form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .form input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table th {
+      background: #1e3a8a;
+      color: white;
+      padding: 12px;
+      font-size: 15px;
+    }
+
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+      font-size: 13px;
+      color: white;
+    }
+
+    .edit {
+      background: #10b981;
+    }
+
+    .edit:hover {
+      background: #059669;
+    }
+
+    .delete {
+      background: #ef4444;
+    }
+
+    .delete:hover {
+      background: #dc2626;
+    }
+
+    /* Modal */
+    .modal-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal {
+      background: white;
+      padding: 20px;
+      width: 350px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">📦 INVENTORY MANAGEMENT</div>
+
+  <div class="container">
+    
+    <div class="card">
+      <h2>Add New Item</h2>
+
+      <div class="form">
+        <input type="text" id="itemName" placeholder="Item Name">
+        <input type="number" id="itemQty" placeholder="Quantity">
+        <input type="text" id="itemCategory" placeholder="Category">
+        <button onclick="addItem()" class="btn">+ Add Item</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Inventory List</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Category</th>
+            <th width="180px">Action</th>
+          </tr>
+        </thead>
+        <tbody id="inventoryTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="modal-bg" id="editModalBg">
+    <div class="modal">
+      <h3>Edit Item</h3>
+      <input type="text" id="editName">
+      <input type="number" id="editQty">
+      <input type="text" id="editCategory">
+
+      <button class="btn" onclick="saveEdit()">Save Changes</button>
+      <button class="delete" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    let inventory = JSON.parse(localStorage.getItem("inventoryData")) || [];
+    let editIndex = null;
+
+    function saveData() {
+      localStorage.setItem("inventoryData", JSON.stringify(inventory));
+    }
+
+    function addItem() {
+      let name = document.getElementById("itemName").value;
+      let qty = document.getElementById("itemQty").value;
+      let category = document.getElementById("itemCategory").value;
+
+      if (!name || !qty || !category) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      inventory.push({ name, qty, category });
+      saveData();
+      loadTable();
+
+      document.getElementById("itemName").value = "";
+      document.getElementById("itemQty").value = "";
+      document.getElementById("itemCategory").value = "";
+    }
+
+    function loadTable() {
+      const table = document.getElementById("inventoryTable");
+      table.innerHTML = "";
+
+      inventory.forEach((item, index) => {
+        table.innerHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>${item.category}</td>
+            <td>
+              <button class="action-btn edit" onclick="openEdit(${index})">Edit</button>
+              <button class="action-btn delete" onclick="deleteItem(${index})">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openEdit(index) {
+      editIndex = index;
+
+      document.getElementById("editName").value = inventory[index].name;
+      document.getElementById("editQty").value = inventory[index].qty;
+      document.getElementById("editCategory").value = inventory[index].category;
+
+      document.getElementById("editModalBg").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("editModalBg").style.display = "none";
+    }
+
+    function saveEdit() {
+      inventory[editIndex].name = document.getElementById("editName").value;
+      inventory[editIndex].qty = document.getElementById("editQty").value;
+      inventory[editIndex].category = document.getElementById("editCategory").value;
+
+      saveData();
+      loadTable();
+      closeModal();
+    }
+
+    function deleteItem(index) {
+      if (confirm("Delete this item?")) {
+        inventory.splice(index, 1);
+        saveData();
+        loadTable();
+      }
+    }
+
+    window.onload = loadTable;
+  </script>
+
+</body>
+</html>
